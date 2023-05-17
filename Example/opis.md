@@ -9,3 +9,5 @@ Projekt `SharedLibrary` zawiera wspólny kod,
 jest to głownie sama zawartość wiadomości, 
 który jest wysłana przez RabbitMQ, oraz generic interface IProducer,
 po którym możemy dziedziczyć i dodawać do niego dodatkową logikę, dodatkowo jest tutaj klasa odpowiadjąca za połączenie z Rabbitem i samo wysłanie wiadomości
+
+RabbitMQ był uruchomiony lokalnie na Dockerze przy pomocy komendy `docker run -d --hostname my-rabbit --name some-rabbit -p 8080:15672 -p 5672:5672 rabbitmq:3-management`
