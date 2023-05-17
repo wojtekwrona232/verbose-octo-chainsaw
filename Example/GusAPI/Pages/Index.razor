@@ -1,0 +1,150 @@
+﻿@page "/"
+@using GusAPI.Services
+@using GusAPI.Models
+@inject GusApiService GusApiService
+
+<style>
+thead tr td a {
+    display: block;
+    
+}
+thead tr td a:hover {
+    display: block;
+    cursor: pointer;
+}
+</style>
+
+<PageTitle>Index</PageTitle>
+
+<table class="table">
+    <thead>
+    <tr>
+        <td>
+            <a @onclick="() => SortList(SortBy.Id)">Id</a>
+        </td>
+        <td>
+            <a @onclick="() => SortList(SortBy.Name)">Nazwa</a>
+        </td>
+        <td>
+            <a @onclick="() => SortList(SortBy.IdParent)">Id nadzrędny el.</a>
+        </td>
+        <td>
+            <a @onclick="() => SortList(SortBy.LevelId)">Id poziom</a>
+        </td>
+        <td>
+            <a @onclick="() => SortList(SortBy.LevelName)">Nazwa poziom</a>
+        </td>
+        <td>
+            <a @onclick="() => SortList(SortBy.IsChangeable)">Czy zmienne</a>
+        </td>
+        <td></td>
+    </tr>
+    </thead>
+    <tbody>
+    <Virtualize Items="@_areas" Context="areaView" OverscanCount="10">
+        @{
+            _styleColour = areaView.LevelName switch
+            {
+                "Temat" => "background-color: green",
+                "Zakres informacyjny" => "background-color: red",
+                "Dziedzina" => "background-color: yellow",
+                _ => ""
+                };
+        }
+        @if (areaView.IsEditing)
+        {
+            <tr style="@_styleColour">
+                <td>@areaView.Id</td>
+                <td>
+                    <input class="form-control" type="text" placeholder="@areaView.Name" @bind-value="areaView.Name"/>
+                </td>
+                <td>
+                    <input class="form-control" type="number" placeholder="@areaView.IdParent" @bind-value="areaView.IdParent"/>
+                </td>
+                <td>
+                    <input class="form-control" type="number" placeholder="@areaView.LevelId" @bind-value="areaView.LevelId"/>
+                </td>
+                <td>
+                    <input class="form-control" type="text" placeholder="@areaView.LevelName" @bind-value="areaView.LevelName"/>
+                </td>
+                <td>
+                    <input class="form-check-input" type="checkbox" checked="@(areaView.IsChangeable ? "checked" : null)" @bind-value="areaView.IsChangeable"/>
+                </td>
+                <td>
+                    <button class="btn btn-primary" @onclick="() => SaveChanges(areaView)">Zapisz</button>
+                    <button class="btn btn-warning" @onclick="() => EditRow(false, areaView)">Anuluj</button>
+                </td>
+            </tr>
+        }
+        else
+        {
+            <tr style="@_styleColour">
+                <td>@areaView.Id</td>
+                <td>@areaView.Name</td>
+                <td>@areaView.IdParent</td>
+                <td>@areaView.LevelId</td>
+                <td>@areaView.LevelName</td>
+                <td>@areaView.IsChangeable</td>
+                <td>
+                    <button class="btn btn-primary" @onclick="() => EditRow(true, areaView)">Edytuj</button>
+                </td>
+            </tr>
+        }
+    </Virtualize>
+    </tbody>
+</table>
+
+@code
+{
+    private string _styleColour = string.Empty;
+    private List<AreaView> _areas = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var areas = await GusApiService.GetData();
+        _areas = areas.ToAreaView().OrderBy(p => p.Id).ToList();
+    }
+
+    void SortList(SortBy sortBy)
+    {
+        _areas = sortBy switch
+        {
+            SortBy.Id => _areas.OrderBy(p => p.Id).ToList(),
+            SortBy.Name => _areas.OrderBy(p => p.Name).ToList(),
+            SortBy.IdParent => _areas.OrderBy(p => p.IdParent).ToList(),
+            SortBy.LevelId => _areas.OrderBy(p => p.LevelId).ToList(),
+            SortBy.LevelName => _areas.OrderBy(p => p.LevelName).ToList(),
+            SortBy.IsChangeable => _areas.OrderBy(p => p.IsChangeable).ToList(),
+            _ => _areas
+            };
+    }
+
+    static void EditRow(bool edit, AreaView areaView)
+    {
+        areaView.IsEditing = edit;
+    }
+
+    void SaveChanges(AreaView areaView)
+    {
+        areaView.IsEditing = false;
+
+        var area = _areas.First(p => p.Id == areaView.Id);
+        var index = _areas.IndexOf(area);
+        Console.WriteLine($"index: {index}");
+        Console.WriteLine($"areaView: {areaView}");
+        Console.WriteLine($"area: {area}");
+
+        if (index != -1)
+            _areas[index] = areaView;
+    }
+
+    private enum SortBy
+    {
+        Id,
+        Name,
+        IdParent,
+        LevelId,
+        LevelName,
+        IsChangeable
+    }
+}
